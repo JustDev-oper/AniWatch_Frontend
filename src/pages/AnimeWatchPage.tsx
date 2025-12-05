@@ -6,6 +6,30 @@ import "plyr-react/plyr.css";
 import "../static/css/anime.css";
 import {getAnimeById, type AnimeDetails} from "../api/anime";
 
+function getVideoKey(id: string) {
+    return `anime_${id}`;
+}
+
+function savePosition(id: string, time: number, duration?: number) {
+    if (!time || Number.isNaN(time) || time <= 0) return;
+
+    // если почти досмотрели — очищаем прогресс
+    if (duration && duration > 0 && time / duration > 0.95) {
+        localStorage.removeItem(getVideoKey(id));
+        return;
+    }
+
+    localStorage.setItem(getVideoKey(id), time.toString());
+}
+
+function loadPosition(id: string): number | null {
+    const saved = localStorage.getItem(getVideoKey(id));
+    if (!saved) return null;
+    const pos = parseFloat(saved);
+    if (!pos || Number.isNaN(pos) || pos <= 0) return null;
+    return pos;
+}
+
 export function AnimeWatchPage() {
     const {id} = useParams<{ id: string }>();
 
@@ -39,15 +63,11 @@ export function AnimeWatchPage() {
     // 2. Сохранение позиции при закрытии страницы
     useEffect(() => {
         if (!id) return;
-        const VIDEO_POSITION_KEY = `anime_${id}`;
 
         function handleBeforeUnload() {
             const player = plyrRef.current?.plyr;
             if (!player) return;
-            const t = player.currentTime;
-            if (t && t > 0) {
-                localStorage.setItem(VIDEO_POSITION_KEY, t.toString());
-            }
+            savePosition(id, player.currentTime, player.duration);
         }
 
         window.addEventListener("beforeunload", handleBeforeUnload);
@@ -59,31 +79,37 @@ export function AnimeWatchPage() {
         };
     }, [id]);
 
-    // 3. Восстановление позиции
+    // 3. Восстановление позиции — ждём появления плеера и duration
     useEffect(() => {
-        if (!anime?.video_url || !id) return;
-        const player = plyrRef.current?.plyr;
-        if (!player) return;
+        if (!id || !anime?.video_url) return;
 
-        const VIDEO_POSITION_KEY = `anime_${id}`;
-        const saved = localStorage.getItem(VIDEO_POSITION_KEY);
-        if (!saved) return;
+        const waitForPlayer = setInterval(() => {
+            const instance = plyrRef.current;
+            const player = instance?.plyr;
+            if (!player) return;
 
-        const pos = parseFloat(saved);
-        if (!pos || Number.isNaN(pos)) return;
-
-        const interval = setInterval(() => {
-            const duration = player.duration || 0;
-            if (duration > 0) {
-                if (pos > 0 && pos < duration) {
-                    player.currentTime = pos;
-                }
-                clearInterval(interval);
+            const savedPos = loadPosition(id);
+            if (!savedPos) {
+                clearInterval(waitForPlayer);
+                return;
             }
-        }, 300);
 
-        return () => clearInterval(interval);
-    }, [anime, id]);
+            const waitForDuration = setInterval(() => {
+                const duration = player.duration || 0;
+                if (duration > 0) {
+                    if (savedPos > 0 && savedPos < duration) {
+                        player.currentTime = savedPos;
+                    }
+                    clearInterval(waitForDuration);
+                    clearInterval(waitForPlayer);
+                }
+            }, 300);
+        }, 200);
+
+        return () => {
+            clearInterval(waitForPlayer);
+        };
+    }, [id, anime?.video_url]);
 
     // 4. Сохранение при паузе
     function handlePause() {
@@ -91,11 +117,7 @@ export function AnimeWatchPage() {
         const player = plyrRef.current?.plyr;
         if (!player) return;
 
-        const VIDEO_POSITION_KEY = `anime_${id}`;
-        const t = player.currentTime;
-        if (t && t > 0) {
-            localStorage.setItem(VIDEO_POSITION_KEY, t.toString());
-        }
+        savePosition(id, player.currentTime, player.duration);
 
         const indicator = document.getElementById(
             "saveIndicator"
