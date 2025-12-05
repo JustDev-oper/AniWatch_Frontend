@@ -6,6 +6,12 @@ import "plyr-react/plyr.css";
 import "../static/css/anime.css";
 import {getAnimeById, type AnimeDetails} from "../api/anime";
 
+type SavedProgress = {
+    time: number;
+    duration: number | null;
+    updatedAt: number;
+};
+
 function getVideoKey(id: string) {
     return `anime_${id}`;
 }
@@ -19,16 +25,31 @@ function savePosition(id: string, time: number, duration?: number) {
         return;
     }
 
-    localStorage.setItem(getVideoKey(id), time.toString());
+    const payload: SavedProgress = {
+        time,
+        duration: duration && duration > 0 ? duration : null,
+        updatedAt: Date.now(),
+    };
+
+    localStorage.setItem(getVideoKey(id), JSON.stringify(payload));
 }
 
 function loadPosition(id: string): number | null {
     const saved = localStorage.getItem(getVideoKey(id));
     if (!saved) return null;
-    const pos = parseFloat(saved);
-    if (!pos || Number.isNaN(pos) || pos <= 0) return null;
-    return pos;
+
+    try {
+        const obj = JSON.parse(saved) as SavedProgress;
+        if (!obj.time || Number.isNaN(obj.time) || obj.time <= 0) return null;
+        return obj.time;
+    } catch {
+        return null;
+    }
 }
+
+// троттлинг для onTimeUpdate
+let lastSave = 0;
+const SAVE_INTERVAL = 10000; // 10 секунд
 
 export function AnimeWatchPage() {
     const {id} = useParams<{ id: string }>();
@@ -128,6 +149,19 @@ export function AnimeWatchPage() {
         }
     }
 
+    // 5. Регулярное сохранение через onTimeUpdate проп
+    function handleTimeUpdate() {
+        if (!id) return;
+        const now = Date.now();
+        if (now - lastSave < SAVE_INTERVAL) return;
+
+        const player = plyrRef.current?.plyr;
+        if (!player) return;
+
+        lastSave = now;
+        savePosition(id, player.currentTime, player.duration);
+    }
+
     if (error) {
         return (
             <div className="watch-page">
@@ -222,6 +256,7 @@ export function AnimeWatchPage() {
                             source={plyrSource}
                             options={plyrOptions}
                             onPause={handlePause}
+                            onTimeUpdate={handleTimeUpdate} // используем проп компонента [web:691]
                         />
                         <div className="rewind-indicator" id="rewindIndicator"></div>
                     </section>

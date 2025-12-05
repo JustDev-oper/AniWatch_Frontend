@@ -1,12 +1,12 @@
 // AnimeCard.tsx
-import { Link } from "react-router-dom";
-import { Anime } from "../api/anime";
+import {Link} from "react-router-dom";
+import {Anime} from "../api/anime";
 
 type Props = {
     anime: Anime;
 };
 
-export function AnimeCard({ anime }: Props) {
+export function AnimeCard({anime}: Props) {
     const url = `/anime/${anime.id}`;
 
     return (
@@ -19,10 +19,7 @@ export function AnimeCard({ anime }: Props) {
                     (e.currentTarget as HTMLImageElement).src = "/no-preview.png";
                 }}
             />
-            <button
-                className="home-anime-btn"
-                onClick={(e) => e.preventDefault()}
-            >
+            <button className="home-anime-btn" type="button">
                 {anime.title}
             </button>
         </Link>
