@@ -197,7 +197,7 @@ export function AnimeWatchPage() {
             "progress",
             "current-time",
             "mute",
-            "volume",
+            "pip",
             "settings",
             "fullscreen",
         ],
