@@ -7,7 +7,7 @@ body,
 }
 
 body {
-    background: #141414;
+    background: #141414 url("/bg.jpg") center / cover fixed no-repeat;
     color: #ffffff;
 }
 
@@ -61,7 +61,7 @@ body {
 .home-body {
     font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
     sans-serif;
-    background: #141414;
+    background: transparent;
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -74,32 +74,13 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* Фон только на главной */
-.home-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image: url("/bg.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    opacity: 0.15;
-    z-index: -1;
-}
-
+/* Затемнение поверх фоновой картинки */
 .home-body::after {
     content: "";
     position: fixed;
     inset: 0;
-    background: rgba(20, 20, 20, 0.5);
+    background: rgba(10, 10, 10, 0.75); /* регулируй яркость тут: 0.5–0.8 */
     z-index: -1;
-}
-
-@supports not (background-attachment: fixed) {
-    .home-body::before {
-        background-attachment: scroll;
-    }
 }
 
 .home-container {
@@ -222,7 +203,6 @@ body {
     overflow: hidden;
     transition: all 0.3s ease;
     cursor: pointer;
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 158, 191, 0.15);
     backdrop-filter: blur(10px);
     margin: 15px;
@@ -247,7 +227,6 @@ body {
 /* hover только для НЕ скелетных карточек */
 .home-anime-card:not(.skeleton):hover {
     transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 12px 35px rgba(255, 158, 191, 0.25);
     border-color: rgba(255, 158, 191, 0.3);
 }
 
@@ -316,23 +295,33 @@ body {
 /* ===== Скелет для карточек ===== */
 
 .home-anime-card.skeleton {
-    background: rgba(20, 20, 20, 0.9);
+    background: rgba(20, 20, 20, 0.6);
     box-shadow: none;
-    border-color: rgba(255, 158, 191, 0.1);
+    border-color: rgba(255, 158, 191, 0.15);
     cursor: default;
     pointer-events: none;
 }
 
 .home-anime-preview.skeleton {
     height: 360px;
-    background: linear-gradient(90deg, #222 0%, #333 50%, #222 100%);
+    background: linear-gradient(
+            90deg,
+            rgba(160, 160, 160, 0.6) 0%,
+            rgba(90, 90, 90, 0.6) 50%,
+            rgba(160, 160, 160, 0.6) 100%
+    );
     background-size: 200% 100%;
     animation: home-skeleton 1.2s infinite linear;
 }
 
 .home-anime-btn.skeleton {
     height: 60px;
-    background: linear-gradient(90deg, #222 0%, #333 50%, #222 100%);
+    background: linear-gradient(
+            90deg,
+            rgba(160, 160, 160, 0.6) 0%,
+            rgba(90, 90, 90, 0.6) 50%,
+            rgba(160, 160, 160, 0.6) 100%
+    );
     background-size: 200% 100%;
     animation: home-skeleton 1.2s infinite linear;
     color: transparent;
@@ -452,10 +441,6 @@ body {
     .home-telegram-btn {
         padding: 12px 24px;
         font-size: 0.95rem;
-    }
-
-    .home-body::before {
-        opacity: 0.1;
     }
 }
 

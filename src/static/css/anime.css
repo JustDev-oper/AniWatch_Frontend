@@ -11,7 +11,7 @@
 .watch-page {
     font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
     sans-serif;
-    background: #141414;
+    background: radial-gradient(circle at top, #1a1b26 0%, #050509 55%, #020204 100%);
     color: #e6f1ff;
     min-height: 100vh;
     padding: 20px;
@@ -46,7 +46,9 @@
     color: #ff9ebf;
     margin-bottom: 12px;
     letter-spacing: -0.02em;
-    text-shadow: 0 2px 4px rgba(255, 158, 191, 0.2);
+    text-shadow:
+            0 2px 4px rgba(255, 158, 191, 0.2),
+            0 0 24px rgba(255, 158, 191, 0.4);
     font-feature-settings: "salt" on, "ss01" on;
 }
 
@@ -69,27 +71,48 @@
     gap: 40px;
 }
 
-/* Контейнер плеера */
+/* ===== Контейнер плеера + кастомизация Plyr ===== */
 
 .watch-video-container {
     position: relative;
     width: 100%;
     max-width: 900px;
-    background: #000;
-    border-radius: 12px;
+    background: radial-gradient(circle at top, #1f2933 0%, #050608 60%, #000 100%);
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 158, 191, 0.1);
+    box-shadow:
+            0 18px 45px rgba(0, 0, 0, 0.8),
+            0 0 40px rgba(255, 158, 191, 0.15);
+    border: 1px solid rgba(255, 158, 191, 0.25);
 
-    /* Plyr-тема */
     --plyr-color-main: #ff9ebf;
-    --plyr-control-padding: 4px;
+    --plyr-video-control-color: #f9fafb;
+    --plyr-range-fill-background: linear-gradient(90deg, #ff9ebf 0%, #ffd1e4 100%);
+    --plyr-audio-controls-background: transparent;
+    --plyr-audio-control-color: #f9fafb;
+}
+
+/* Лёгкая верхняя маска для глубины */
+
+.watch-video-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+            180deg,
+            rgba(255, 158, 191, 0.06) 0%,
+            transparent 35%,
+            transparent 100%
+    );
+    z-index: 1;
 }
 
 /* Адаптивное видео 16:9 */
 
 .watch-video-container .plyr__video-wrapper {
     aspect-ratio: 16 / 9;
+    background: #000;
 }
 
 .watch-video-container .plyr {
@@ -99,7 +122,134 @@
     padding: 0;
 }
 
-/* Блок информации */
+/* Основная панель управления */
+
+.watch-video-container .plyr__controls {
+    background: radial-gradient(circle at bottom,
+    rgba(14, 14, 18, 0.98) 0%,
+    rgba(10, 10, 14, 0.98) 40%,
+    rgba(5, 5, 8, 0.98) 100%);
+    font-size: 13px;
+    min-height: 44px;
+    padding-block: 4px;
+    padding-inline: 10px;
+    border-top: 1px solid rgba(255, 158, 191, 0.15);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.7);
+}
+
+/* Кнопки управления */
+
+.watch-video-container .plyr__control {
+    border-radius: 999px;
+    transition: background-color 0.18s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.watch-video-container .plyr__control.plyr__tab-focus,
+.watch-video-container .plyr__control:hover {
+    background-color: rgba(255, 158, 191, 0.18);
+    box-shadow: 0 0 0 1px rgba(255, 158, 191, 0.45);
+    transform: translateY(-1px);
+}
+
+.watch-video-container .plyr__control--pressed {
+    background-color: rgba(255, 158, 191, 0.28);
+}
+
+/* Оверлейная кнопка Play */
+
+.watch-video-container .plyr__control--overlaid {
+    background: radial-gradient(circle at 30% 30%, #ffe5f0 0%, #ff9ebf 35%, #f95f9b 100%);
+    border-radius: 50%;
+    width: 86px;
+    height: 86px;
+    line-height: 86px;
+    margin-top: -43px;
+    margin-left: -43px;
+    box-shadow:
+            0 8px 26px rgba(0, 0, 0, 0.7),
+            0 0 40px rgba(255, 158, 191, 0.6);
+    backdrop-filter: blur(8px);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+}
+
+.watch-video-container .plyr--video:hover .plyr__control--overlaid {
+    transform: scale(1.06) translateY(-2px);
+    box-shadow:
+            0 10px 32px rgba(0, 0, 0, 0.85),
+            0 0 55px rgba(255, 158, 191, 0.9);
+    filter: saturate(1.1);
+}
+
+/* Прогресс-бар */
+
+.watch-video-container .plyr__progress {
+    flex: 1.2;
+}
+
+.watch-video-container .plyr__progress__buffer {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.watch-video-container .plyr__progress input[type="range"] {
+    height: 5px;
+}
+
+.watch-video-container .plyr__progress input[type="range"]::-webkit-slider-runnable-track {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+.watch-video-container .plyr__progress input[type="range"]::-moz-range-track {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Tooltip / предпросмотр */
+
+.watch-video-container .plyr__tooltip {
+    background-color: #0b0b10;
+    color: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 158, 191, 0.35);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+    font-size: 11px;
+}
+
+/* Время */
+
+.watch-video-container .plyr__time {
+    font-size: 12px;
+    padding: 0 6px;
+    font-weight: 500;
+    color: #e6f1ff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+/* Громкость */
+
+.watch-video-container .plyr__volume input[type="range"] {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Меню настроек / captions */
+
+.watch-video-container .plyr__menu__container {
+    border-radius: 10px;
+    background-color: rgba(10, 10, 17, 0.97);
+    border: 1px solid rgba(255, 158, 191, 0.25);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+}
+
+.watch-video-container .plyr__menu__container .plyr__menu__value {
+    color: #ffbdd3;
+}
+
+/* Кнопка fullscreen */
+
+.watch-video-container .plyr__controls__item.plyr__control--fullscreen {
+    margin-left: 4px;
+}
+
+/* ===== Блок информации ===== */
 
 .watch-info-section {
     width: 100%;
@@ -123,6 +273,7 @@
     font-weight: 600;
     letter-spacing: -0.01em;
     font-feature-settings: "salt" on;
+    text-shadow: 0 0 20px rgba(255, 158, 191, 0.35);
 }
 
 .watch-info-text {
@@ -172,47 +323,7 @@
     letter-spacing: 0.02em;
 }
 
-/* ===== Кастомизация Plyr ===== */
-
-.watch-video-container .plyr__controls {
-    background: rgba(20, 20, 20, 0.95);
-    font-size: 13px;
-    min-height: 40px;
-    padding-block: 2px;
-    backdrop-filter: blur(10px);
-}
-
-.watch-video-container .plyr__progress__buffer,
-.watch-video-container .plyr__volume input[type="range"] {
-    background-color: rgba(255, 158, 191, 0.25);
-}
-
-.watch-video-container .plyr__control--overlaid {
-    background-color: rgba(255, 158, 191, 0.2);
-    border: 2px solid #ff9ebf;
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-    line-height: 80px;
-    margin-top: -40px;
-    margin-left: -40px;
-    backdrop-filter: blur(5px);
-    transition: all 0.3s ease;
-}
-
-.watch-video-container .plyr--video:hover .plyr__control--overlaid {
-    background-color: rgba(255, 158, 191, 0.3);
-    transform: scale(1.05);
-}
-
-.watch-video-container .plyr__time {
-    font-size: 12px;
-    padding: 0 6px;
-    font-weight: 500;
-    color: #e6f1ff;
-}
-
-/* ===== Скелет для страницы просмотра ===== */
+/* ===== Скелетон ===== */
 
 .watch-skeleton-video {
     height: 0;
@@ -275,22 +386,26 @@
         padding: 8px 12px;
     }
 
+    .watch-video-container {
+        border-radius: 12px;
+    }
+
     .watch-video-container .plyr__controls {
         font-size: 12px;
-        min-height: 36px;
+        min-height: 38px;
+        padding-inline: 8px;
     }
 
     .watch-video-container .plyr__time {
         font-size: 11px;
-        padding: 0 4px;
     }
 
     .watch-video-container .plyr__control--overlaid {
-        width: 70px;
-        height: 70px;
-        line-height: 70px;
-        margin-top: -35px;
-        margin-left: -35px;
+        width: 74px;
+        height: 74px;
+        line-height: 74px;
+        margin-top: -37px;
+        margin-left: -37px;
     }
 }
 
@@ -300,20 +415,24 @@
     }
 
     .watch-video-container {
-        border-radius: 8px;
+        border-radius: 10px;
+    }
+
+    .watch-video-container .plyr__controls {
+        font-size: 11px;
+        min-height: 34px;
     }
 
     .watch-video-container .plyr__time {
         font-size: 10px;
-        padding: 0 4px;
     }
 
     .watch-video-container .plyr__control--overlaid {
-        width: 60px;
-        height: 60px;
-        line-height: 60px;
-        margin-top: -30px;
-        margin-left: -30px;
+        width: 64px;
+        height: 64px;
+        line-height: 64px;
+        margin-top: -32px;
+        margin-left: -32px;
     }
 
     .watch-header {
