@@ -13,7 +13,7 @@ body {
 
 @font-face {
     font-family: "MyCustomFont";
-    src: url("/fonts/tt-travels-next-trl-bd.woff2") format("woff2");
+    src: url("../fonts/tt-travels-next-trl-bd.ttf") format("woff2");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -213,7 +213,7 @@ body {
 
 .home-anime-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* как было */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 12px;
     width: 100%;
     margin-bottom: 12px;
@@ -235,10 +235,9 @@ body {
     position: relative;
     text-decoration: none;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-    transition: transform 0.25s ease,
+    transition: background 0.25s ease,
     box-shadow 0.25s ease,
-    border-color 0.25s ease,
-    background 0.25s ease;
+    border-color 0.25s ease;
 }
 
 .all-anime-title {
@@ -261,16 +260,16 @@ body {
     pointer-events: none;
 }
 
+/* мягкий подсвет без увеличения */
 .home-anime-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(255, 158, 191, 0.5);
-    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(255, 158, 191, 0.45);
-    background: radial-gradient(circle at top, rgba(255, 158, 191, 0.16), rgba(30, 30, 30, 0.9));
-}
-
-.home-anime-card:hover::before {
-    opacity: 1;
+    border-color: rgba(255, 158, 191, 0.6);
+    background: radial-gradient(
+            circle at top,
+            rgba(255, 158, 191, 0.18),
+            rgba(30, 30, 30, 0.95)
+    );
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.6),
+    0 0 22px rgba(255, 158, 191, 0.5);
 }
 
 /* Вытянутый постер */
@@ -281,12 +280,8 @@ body {
     height: auto;
     object-fit: cover;
     display: block;
-    transition: transform 0.25s ease;
 }
 
-.home-anime-card:hover .home-anime-preview {
-    transform: scale(1.02);
-}
 
 /* Полоска прогресса – фикс внизу карточки */
 
@@ -294,7 +289,7 @@ body {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 60px; /* прямо над кнопкой */
+    bottom: 60px;
     height: 4px;
     background: rgb(124, 124, 124);
     overflow: hidden;
@@ -449,7 +444,6 @@ body {
     background: rgba(0, 136, 204, 0.25);
     box-shadow: 0 0 15px rgba(0, 136, 204, 0.3);
     transform: translateY(-1px);
-    border-color: rgba(0, 136, 204, 0.6);
 }
 
 .home-telegram-btn:active {
