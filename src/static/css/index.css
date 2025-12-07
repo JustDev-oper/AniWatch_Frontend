@@ -13,10 +13,16 @@ body {
 
 @font-face {
     font-family: "MyCustomFont";
-    src: url("../fonts/tt-travels-next-trl-bd.ttf") format("woff2");
-    font-weight: normal;
+    src: url("/fonts/tt-travels-next-trl-bd.woff2") format("woff2");
+    font-weight: 400;
     font-style: normal;
-    font-display: block;
+    font-display: swap;
+}
+
+/* системный стек без внешних подключений */
+:root {
+    --system-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -182,7 +188,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 28px; /* чуть меньше общего расстояния между секциями */
+    gap: 28px;
 }
 
 /* ===== Секция "Продолжить просмотр" ===== */
@@ -190,7 +196,7 @@ body {
 .home-continue {
     width: 100%;
     max-width: 1200px;
-    margin-bottom: 6px; /* небольшой зазор перед блоком "Все аниме" */
+    margin-bottom: 6px;
 }
 
 .home-continue-title {
@@ -199,18 +205,18 @@ body {
     text-align: center;
     font-weight: 600;
     color: #ff9ebf;
-    margin-bottom: 10px; /* было 16px */
+    margin-bottom: 10px;
     text-shadow: 0 0 12px rgba(255, 158, 191, 0.3);
 }
 
-/* Сетка аниме */
+/* Сетка аниме (десктоп) */
 
 .home-anime-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* как было */
+    gap: 12px;
     width: 100%;
-    margin-bottom: 12px; /* было 20px — меньше воздуха между секциями */
+    margin-bottom: 12px;
     border: 2px solid rgba(255, 158, 191, 0.2);
     border-radius: 24px;
     backdrop-filter: blur(10px);
@@ -225,7 +231,7 @@ body {
     cursor: pointer;
     border: 1px solid rgba(255, 158, 191, 0.15);
     backdrop-filter: blur(10px);
-    margin: 15px;
+    margin: 12px;
     position: relative;
     text-decoration: none;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
@@ -241,7 +247,7 @@ body {
     text-align: center;
     font-weight: 600;
     color: #ff9ebf;
-    margin: 8px 0 6px; /* маленький отступ сверху и снизу */
+    margin: 8px 0 6px;
     text-shadow: 0 0 10px rgba(255, 158, 191, 0.3);
 }
 
@@ -267,9 +273,12 @@ body {
     opacity: 1;
 }
 
+/* Вытянутый постер */
+
 .home-anime-preview {
     width: 100%;
-    height: 360px;
+    aspect-ratio: 2 / 3;
+    height: auto;
     object-fit: cover;
     display: block;
     transition: transform 0.25s ease;
@@ -279,14 +288,14 @@ body {
     transform: scale(1.02);
 }
 
-/* Полоска прогресса в карточке (для "Продолжить просмотр") */
+/* Полоска прогресса – фикс внизу карточки */
 
 .home-progress {
-    position: sticky;
-    left: 10px;
-    right: 10px;
-    bottom: 60px;
-    height: 5px; /* было 4px */
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 60px; /* прямо над кнопкой */
+    height: 4px;
     background: rgb(124, 124, 124);
     overflow: hidden;
 }
@@ -299,7 +308,7 @@ body {
             rgba(255, 89, 153, 0.6)
     );
     border-radius: 999px;
-    box-shadow: 0 0 4px rgba(255, 158, 191, 0.3); /* мягкое свечение */
+    box-shadow: 0 0 4px rgba(255, 158, 191, 0.3);
 }
 
 /* Кнопка в карточке */
@@ -369,7 +378,9 @@ body {
 }
 
 .home-anime-preview.skeleton {
-    height: 360px;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    height: auto;
     background: linear-gradient(
             90deg,
             rgba(160, 160, 160, 0.6) 0%,
@@ -395,7 +406,7 @@ body {
     pointer-events: none;
 }
 
-/* Анимация шиммера для карточек */
+/* Анимация шиммера */
 
 @keyframes home-skeleton {
     0% {
@@ -467,7 +478,7 @@ body {
 
 /* Адаптивность */
 
-@media (max_width: 768px) {
+@media (max-width: 768px) {
     .home-body {
         padding: 15px;
     }
@@ -486,13 +497,24 @@ body {
     }
 
     .home-anime-grid {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 10px;
+        border-radius: 18px;
     }
 
-    .home-anime-preview,
-    .home-anime-preview.skeleton {
-        height: 300px;
+    .home-anime-card {
+        margin: 8px;
+        border-radius: 12px;
+    }
+
+    .home-anime-btn {
+        height: 52px;
+        font-size: 0.95rem;
+    }
+
+    .home-progress {
+        bottom: 52px;
+        height: 3px;
     }
 
     .home-search-input,
@@ -521,13 +543,22 @@ body {
     }
 
     .home-anime-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
-    .home-anime-preview,
-    .home-anime-preview.skeleton {
-        height: 280px;
+    .home-anime-card {
+        margin: 6px;
+    }
+
+    .home-anime-btn {
+        height: 44px;
+        font-size: 0.85rem;
+    }
+
+    .home-progress {
+        bottom: 44px;
+        height: 3px;
     }
 
     .home-header {
