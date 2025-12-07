@@ -1,8 +1,8 @@
 // src/pages/AnimeWatchPage.tsx
 import {useEffect, useState, useRef} from "react";
 import {useParams} from "react-router-dom";
-import Plyr, {PlyrInstance, PlyrProps} from "plyr-react";
-import "plyr-react/plyr.css";
+import Plyr from "plyr";
+import "plyr/dist/plyr.css";
 import "../static/css/anime.css";
 import {getAnimeById, type AnimeDetails} from "../api/anime";
 
@@ -19,7 +19,6 @@ function getVideoKey(id: string) {
 function savePosition(id: string, time: number, duration?: number) {
     if (!time || Number.isNaN(time) || time <= 0) return;
 
-    // если почти досмотрели — очищаем прогресс
     if (duration && duration > 0 && time / duration > 0.95) {
         localStorage.removeItem(getVideoKey(id));
         return;
@@ -47,9 +46,8 @@ function loadPosition(id: string): number | null {
     }
 }
 
-// троттлинг для onTimeUpdate
 let lastSave = 0;
-const SAVE_INTERVAL = 10000; // 10 секунд
+const SAVE_INTERVAL = 10000;
 
 export function AnimeWatchPage() {
     const {id} = useParams<{ id: string }>();
@@ -57,9 +55,10 @@ export function AnimeWatchPage() {
     const [anime, setAnime] = useState<AnimeDetails | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    const plyrRef = useRef<PlyrInstance | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const plyrRef = useRef<Plyr | null>(null);
 
-    // 1. Грузим данные аниме
+    // загрузка данных
     useEffect(() => {
         if (!id) {
             setError("ID аниме не передан");
@@ -81,12 +80,75 @@ export function AnimeWatchPage() {
         loadAnimeData();
     }, [id]);
 
-    // 2. Сохранение позиции при закрытии страницы
+    // инициализация Plyr
+    useEffect(() => {
+        if (!videoRef.current) return;
+
+        // уничтожаем старый инстанс, если был
+        if (plyrRef.current) {
+            plyrRef.current.destroy();
+            plyrRef.current = null;
+        }
+
+        const player = new Plyr(videoRef.current, {
+            seekTime: 10,
+            controls: [
+                "play",
+                "progress",
+                "current-time",
+                "mute",
+                "pip",
+                "settings",
+                "fullscreen",
+            ],
+        });
+
+        plyrRef.current = player;
+
+        // восстановление позиции после загрузки метаданных
+        const handleLoaded = () => {
+            if (!id) return;
+            const saved = loadPosition(id);
+            if (saved && saved > 0 && saved < player.duration) {
+                player.currentTime = saved;
+            }
+        };
+
+        const handlePause = () => {
+            if (!id) return;
+            savePosition(id, player.currentTime, player.duration);
+
+            const indicator = document.getElementById("saveIndicator") as HTMLDivElement | null;
+            if (indicator) {
+                indicator.classList.add("show");
+                setTimeout(() => indicator.classList.remove("show"), 2000);
+            }
+        };
+
+        const handleTimeUpdate = () => {
+            if (!id) return;
+            const now = Date.now();
+            if (now - lastSave < SAVE_INTERVAL) return;
+            lastSave = now;
+            savePosition(id, player.currentTime, player.duration);
+        };
+
+        player.on("loadedmetadata", handleLoaded);
+        player.on("pause", handlePause);
+        player.on("timeupdate", handleTimeUpdate);
+
+        return () => {
+            player.destroy();
+            plyrRef.current = null;
+        };
+    }, [id, anime?.video_url]);
+
+    // сохранение при выходе
     useEffect(() => {
         if (!id) return;
 
         function handleBeforeUnload() {
-            const player = plyrRef.current?.plyr;
+            const player = plyrRef.current;
             if (!player) return;
             savePosition(id, player.currentTime, player.duration);
         }
@@ -99,68 +161,6 @@ export function AnimeWatchPage() {
             window.removeEventListener("pagehide", handleBeforeUnload);
         };
     }, [id]);
-
-    // 3. Восстановление позиции — ждём появления плеера и duration
-    useEffect(() => {
-        if (!id || !anime?.video_url) return;
-
-        const waitForPlayer = setInterval(() => {
-            const instance = plyrRef.current;
-            const player = instance?.plyr;
-            if (!player) return;
-
-            const savedPos = loadPosition(id);
-            if (!savedPos) {
-                clearInterval(waitForPlayer);
-                return;
-            }
-
-            const waitForDuration = setInterval(() => {
-                const duration = player.duration || 0;
-                if (duration > 0) {
-                    if (savedPos > 0 && savedPos < duration) {
-                        player.currentTime = savedPos;
-                    }
-                    clearInterval(waitForDuration);
-                    clearInterval(waitForPlayer);
-                }
-            }, 300);
-        }, 200);
-
-        return () => {
-            clearInterval(waitForPlayer);
-        };
-    }, [id, anime?.video_url]);
-
-    // 4. Сохранение при паузе
-    function handlePause() {
-        if (!id) return;
-        const player = plyrRef.current?.plyr;
-        if (!player) return;
-
-        savePosition(id, player.currentTime, player.duration);
-
-        const indicator = document.getElementById(
-            "saveIndicator"
-        ) as HTMLDivElement | null;
-        if (indicator) {
-            indicator.classList.add("show");
-            setTimeout(() => indicator.classList.remove("show"), 2000);
-        }
-    }
-
-    // 5. Регулярное сохранение через onTimeUpdate проп
-    function handleTimeUpdate() {
-        if (!id) return;
-        const now = Date.now();
-        if (now - lastSave < SAVE_INTERVAL) return;
-
-        const player = plyrRef.current?.plyr;
-        if (!player) return;
-
-        lastSave = now;
-        savePosition(id, player.currentTime, player.duration);
-    }
 
     if (error) {
         return (
@@ -210,33 +210,6 @@ export function AnimeWatchPage() {
         anime?.video_url ??
         "http://docs.evostream.com/sample_content/assets/bunny.mp4";
 
-    const plyrSource: PlyrProps["source"] = {
-        type: "video",
-        sources: [
-            {
-                src: videoUrl,
-                type: "video/mp4",
-            },
-        ],
-    };
-
-    const plyrOptions: PlyrProps["options"] = {
-        seekTime: 10,
-        keyboard: {
-            focused: true,
-            global: true,
-        },
-        controls: [
-            "play",
-            "progress",
-            "current-time",
-            "mute",
-            "pip",
-            "settings",
-            "fullscreen",
-        ],
-    };
-
     return (
         <div className="watch-page">
             <div className="watch-container">
@@ -251,14 +224,13 @@ export function AnimeWatchPage() {
 
                 <main className="watch-main">
                     <section className="watch-video-container">
-                        <Plyr
-                            ref={plyrRef}
-                            source={plyrSource}
-                            options={plyrOptions}
-                            onPause={handlePause}
-                            onTimeUpdate={handleTimeUpdate} // используем проп компонента [web:691]
+                        {/* простой <video>, Plyr навешивается через new Plyr(...) */}
+                        <video
+                            ref={videoRef}
+                            src={videoUrl}
+                            className="watch-video"
                         />
-                        <div className="rewind-indicator" id="rewindIndicator"></div>
+                        <div className="rewind-indicator" id="rewindIndicator"/>
                     </section>
 
                     <section className="watch-info-section">
